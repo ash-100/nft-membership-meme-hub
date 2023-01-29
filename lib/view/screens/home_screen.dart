@@ -4,6 +4,7 @@ import 'package:http/http.dart';
 
 import 'package:flutter/material.dart';
 import 'package:nft_membership_meme_hub/constants.dart';
+import 'package:nft_membership_meme_hub/view/screens/meme_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:walletconnect_dart/walletconnect_dart.dart';
 import 'package:web3dart/contracts.dart';
@@ -58,51 +59,95 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            Center(child: Text(text)),
-            isMember
-                ? Text('you are a memeber')
-                : ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        final contract = DeployedContract(
-                            ContractAbi.fromJson(
-                                json.encode(abi), 'MemeDaoNFT'),
-                            EthereumAddress.fromHex(contractAddress));
-                        EthereumWalletConnectProvider provider =
-                            EthereumWalletConnectProvider(widget.connector);
-                        ContractFunction mintFunction =
-                            contract.function('mint');
-                        List<dynamic> args = [
-                          EthereumAddress.fromHex(widget.session.accounts[0])
-                        ];
-                        final data = mintFunction.encodeCall(args);
+        child: isMember
+            ? Center(
+                child: Column(
+                  //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Spacer(),
+                    Text(
+                      'Congratulations !!!',
+                      style:
+                          TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                    //Spacer(),
+                    Text(
+                      'You are a memeber',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    Spacer(),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          primary: Color(primaryColor),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40))),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('View memes'),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MemeScreen()));
+                      },
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          primary: Color(primaryColor),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40))),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text('Add memes'),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MemeScreen()));
+                      },
+                    ),
+                    Spacer()
+                  ],
+                ),
+              )
+            : ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final contract = DeployedContract(
+                        ContractAbi.fromJson(json.encode(abi), 'MemeDaoNFT'),
+                        EthereumAddress.fromHex(contractAddress));
+                    EthereumWalletConnectProvider provider =
+                        EthereumWalletConnectProvider(widget.connector);
+                    ContractFunction mintFunction = contract.function('mint');
+                    List<dynamic> args = [
+                      EthereumAddress.fromHex(widget.session.accounts[0])
+                    ];
+                    final data = mintFunction.encodeCall(args);
 
-                        launchUrlString(widget.uri,
-                            mode: LaunchMode.externalApplication);
-                        var res = await provider.sendTransaction(
-                            from: widget.session.accounts[0],
-                            to: contractAddress,
-                            data: data,
-                            value: BigInt.from(0.001 * 1000000000000000000));
+                    launchUrlString(widget.uri,
+                        mode: LaunchMode.externalApplication);
+                    var res = await provider.sendTransaction(
+                        from: widget.session.accounts[0],
+                        to: contractAddress,
+                        data: data,
+                        value: BigInt.from(0.001 * 1000000000000000000));
+                    setState(() {
+                      text = res.toString();
+                      if (res.toString().trim().isNotEmpty) {
                         setState(() {
-                          text = res.toString();
-                          if (res.toString().trim().isNotEmpty) {
-                            setState(() {
-                              isMember = true;
-                            });
-                          }
-                        });
-                      } catch (e) {
-                        setState(() {
-                          text = e.toString();
+                          isMember = true;
                         });
                       }
-                    },
-                    child: Text('Mint NFT Membership'))
-          ],
-        ),
+                    });
+                  } catch (e) {
+                    setState(() {
+                      text = e.toString();
+                    });
+                  }
+                },
+                child: Text('Mint NFT Membership')),
       ),
     );
   }
